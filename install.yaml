@@ -68,16 +68,3 @@
     - name: Configure supervised services
       copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf
 
-    - name: Install restroom-installation
-      stat:
-        path: /home/app/restroom-mw
-      register: restroom_installed
-    - name: Upload setup script
-      copy: src=install.sh dest=/home/app/install.sh owner=app
-      when: not restroom_installed.stat.exists
-    - name: Launch restroom-mw install script
-      become: true
-      become_user: "app"
-      shell: cd /home/app && sh ./install.sh
-      when: not restroom_installed.stat.exists
-

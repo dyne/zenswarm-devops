@@ -1,0 +1,24 @@
+---
+- name: INSTALL RESTROOM
+  hosts: consensusroom
+  remote_user: app
+  tasks:
+    - name: Check restroom-installation
+      stat:
+        path: /home/app/restroom-mw
+      register: restroom_installed
+
+    - name: Install restroom from npx
+      command: npx create-restroom --all
+      when: not restroom_installed.stat.exists
+
+    - name: Upload restroom env configuration
+      copy: src=restroom.conf dest=/home/app/restroom-mw/.env
+      when: not restroom_installed.stat.exists
+
+    - name: Compile restroom with yarn
+      command: yarn
+      args:
+        chdir: /home/app/restroom-mw
+      when: not restroom_installed.stat.exists
+      

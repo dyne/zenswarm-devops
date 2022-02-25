@@ -3,12 +3,8 @@
   hosts: consensusroom
   remote_user: root
   tasks:
-    - name: Check zencode
-      delegate_to: localhost
-      shell: cd ../services/instance/ && zip -9 install.zip *
-      register: zencode_found
     - name: Upload zencode
-      copy: src=../services/instance/install.zip dest=/home/app/install.zip owner=app
+      copy: src=install.zip dest=/home/app/install.zip owner=app
     - name: Publish zencode on-line
       become: true
       become_user: "app"

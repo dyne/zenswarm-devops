@@ -13,8 +13,8 @@ if ! [ -r ${sshkey} ]; then ssh-keygen -t ed25519 -f ${sshkey} -q -N ''; fi
 #curl -sL https://api.linode.com/v4/regions | jq . | awk '/id.:/ {print $2}' | xargs
 
 # regions=(ap-west ca-central ap-southeast us-central us-west us-southeast us-east eu-west ap-south eu-central ap-northeast)
-# only 5
-regions=(ca-central us-west us-east eu-central ap-west)
+# only 6
+regions=(ca-central us-west us-east eu-central ap-west ap-southeast)
 
 linode-up() { linode-cli linodes create --root_pass ${rootpass} --type ${nodetype} --group ${group} --label ${group}-${reg} --region ${reg} --authorized_keys "$(cat ${sshkey}.pub)";}
 linode-up-dry() { info "linode-cli linodes create --root_pass ${rootpass} --type ${nodetype} --group ${group} --label ${group}-${reg} --region ${reg} --authorized_keys \"`cat ${sshkey}.pub`\"" ; }
@@ -82,16 +82,14 @@ case $cmd in
 	    linode-cli linodes delete ${f[0]};
 	done
 	;;
-    inventory)
+    list-ips)
 	ips=(`linode-cli linodes list | awk ''"/${group}/"' {print $14}'`)
-	rm -f hosts.toml
-	echo "[$group]" | tee -a hosts.toml
 	if [ ${#ips} = 0 ]; then 
 	    info "Zero nodes found."
 	    exit 1
 	fi
 	for i in ${ips[@]}; do
-	    echo "$i" | tee -a hosts.toml
+	    echo "$i"
 	done
 	;;
 
