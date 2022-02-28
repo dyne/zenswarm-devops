@@ -9,6 +9,13 @@
       copy: src=install.zip dest=/home/app/install.zip owner=app
     - name: Publish zencode on-line
       command: unzip -o /home/app/install.zip -d /home/app/restroom-template-minimal/zencode
+    - name: Set app permission on zencode directory
+      file:
+        path: /home/app/restroom-template-minimal/zencode
+        state: directory
+        recurse: yes
+        owner: app
+        group: app
     - name: Find own IP
       shell: /bin/hostname -I | awk '{print $1}'
       register: ipv4
