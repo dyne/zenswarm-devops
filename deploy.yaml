@@ -17,7 +17,7 @@
       register: macid
     - name: Patch zencode with node values
       shell: >
-        sed -i -e 's/192.168.0.100/{{ ipv4.stdout }}/g' -e 's/Kenshiro/{{ macid.stdout }}/g' -e 's/3030/3300/g' /home/app/restroom-template-minimal/zencode/consensusroom-announce-p1.keys
+        sed -i -e 's/192.168.0.100/{{ ipv4.stdout }}/g' -e 's/Kenshiro/{{ ipv4.stdout }}/g' -e 's/3030/3300/g' /home/app/restroom-template-minimal/zencode/consensusroom-announce-p1.keys
     - name: Reboot server
       shell: init 6
       async: 1
