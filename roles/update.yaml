@@ -1,0 +1,16 @@
+---
+- name: reboot all nodes
+  hosts: all
+  remote_user: root
+  tasks:
+    - name: Pull restroom updates
+      git:
+        repo: https://github.com/dyne/restroom-template-minimal
+        dest: /home/app/restroom-template-minimal
+        update: yes
+        clone: no
+      become: true
+      become_user: "app" 
+
+    - name: Reboot
+      shell: init 6

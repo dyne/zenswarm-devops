@@ -10,11 +10,11 @@ export
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' Makefile
 
-ANSIPLAY = ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --inventory hosts.toml --ssh-common-args '-o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes' --private-key ${sshkey} $(1)
+ANSIPLAY = ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook --inventory hosts.toml --ssh-common-args '-o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes' --private-key ${sshkey} "roles/$(1)"
 
 play:
 	$(if ${BOOK},,$(error Specify ansible playbook in BOOK env))
-	$(call ANSIPLAY, ${BOOK})
+	$(call ANSIPLAY,${BOOK})
 
 steps:
 	@cat $(subst -steps,,${PLAYBOOK}) | grep '\- name'
@@ -85,14 +85,12 @@ image-delete: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers 
 image-delete: ## delete the zenswarm golden image on linode
 	linode-cli images delete ${IMAGE}
 
-# $(call ANSIPLAY, install-restroom.yaml)
-
 ##@ App management
 
 deploy: inventory ## deploy the zencode contracts on all available nodes
 	$(if $(wildcard ./install.zip), \
 		$(info Installing all nodes) \
-		$(call ANSIPLAY, deploy.yaml) \
+		$(call ANSIPLAY,deploy.yaml) \
 	, $(error Zencode not found, install.zip is missing))
 
 announce: inventory ## announce all nodes to the tracker endpoint
@@ -109,10 +107,8 @@ ssh: ## log into a node in REGION via ssh (eu-central is default)
 
 uptime: inventory ## show uptime of all running nodes
 	$(info Showing uptime for all running nodes)
-	$(call ANSIPLAY, uptime.yaml)
+	$(call ANSIPLAY,uptime.yaml)
 
 reboot: inventory ## reboot all running nodes
-	$(call ANSIPLAY, reboot.yaml)
+	$(call ANSIPLAY,reboot.yaml)
 
-restart: inventory
-	$(info ANSIPLAY, restart.yaml)
