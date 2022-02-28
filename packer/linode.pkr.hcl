@@ -6,7 +6,7 @@ source "linode" "zenswarm" {
   image_label       = "zenswarm"
   instance_label    = "zenswarm-temporary-image-${local.timestamp}"
   instance_type     = "g6-nanode-1"
-  linode_token      = ""
+  linode_token=""
   region            = "eu-central"
   ssh_username      = "root"
 }

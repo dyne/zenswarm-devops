@@ -1,6 +1,6 @@
 R ?= $(shell pwd)
 REGION ?= eu-central
-IMAGE ?= linode/debian11
+# IMAGE ?= linode/debian11
 rootpass := $(shell openssl rand -base64 32)
 nodetype := g6-nanode-1
 sshkey := ${R}/sshkey
@@ -37,7 +37,8 @@ list: ## list running nodes (list-ips for IPv4 only)
 	@linode-cli linodes list
 
 list-ips:
-	@./linode-swarm.sh list-ips
+	@linode-cli --text --no-header --format ipv4 linodes list
+#	@./linode-swarm.sh list-ips
 
 inventory: ## update the ansible inventory of active nodes
 	@echo "[zenswarm]" >  hosts.toml
@@ -54,7 +55,12 @@ all-down: inventory ## destroy all active nodes
 	$(info Destroying existing nodes in all regions)
 	@./linode-swarm.sh all-down
 
+one-up: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list \
+	 | awk '/zenswarm/ {print $$1}')
 one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
+	$(if ${IMAGE}, \
+		$(info Zenswarm image found: ${IMAGE}), \
+		$(error Zenswarm image not found, use image-build first))	
 	$(info Creating one node in region ${REGION})
 	@./linode-swarm.sh one-up ${REGION} ${IMAGE}
 	@make -s ssh-cleanup
@@ -66,21 +72,13 @@ one-down: ## destroy one active node in REGION (eu-central is default)
 
 ##@ Image operations
 
-image-setup: ## setup golden image development
-	@make -s one-up
-	linode-cli volumes create --label 
+image-init: linode-token := $(shell awk '/token/ {print $$3}' ${HOME}/.config/linode-cli)
+image-init: ## setup golden image development on linode
+	packer init packer/config.pkr.hcl
+	sed -i "s/linode_token=\"\"/linode_token=\"${linode-token}\"/g" packer/linode.pkr.hcl
 
-image-install: ## install the zenswarm golden image
-	$(info Installing golden image)
-	$(call ANSIPLAY, install-devuan-stage1.yaml)
-	@make -s ssh-cleanup
-	@./linode-swarm.sh wait-running
-	$(call ANSIPLAY, install-devuan-stage2.yaml)
-	@./linode-swarm.sh wait-running
-	$(call ANSIPLAY, install-login.yaml)
-	$(call ANSIPLAY, install.yaml)
-
-image-save: ## save the zenswarm golden image
+image-build: ## build the zenswarm golden image on linode
+	cd packer && packer build linode.pkr.hcl
 
 # $(call ANSIPLAY, install-restroom.yaml)
 

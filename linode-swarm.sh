@@ -18,10 +18,11 @@ regions=(ca-central us-west us-east eu-central ap-west ap-southeast)
 
 linode-cmd() {
     linode-up-dry
-    linode-cli linodes ${1} --root_pass ${rootpass} --type ${nodetype} --group zenswarm --image ${image} --label zenswarm-${reg} --region ${reg} --authorized_keys "$(cat ${sshkey}.pub)"
+#    linode-cli linodes ${1} --root_pass ${rootpass} --type ${nodetype} --group zenswarm --image ${image} --label zenswarm-${reg} --region ${reg} --authorized_keys "$(cat ${sshkey}.pub)"
+    linode-cli linodes ${1} --root_pass "zenswarm" --type ${nodetype} --group zenswarm --image ${image} --label zenswarm-${reg} --region ${reg} --authorized_keys "$(cat ${sshkey}.pub)"
 }
 linode-up-dry() {
-    info "linode-cli linodes ${1} --root_pass ${rootpass} --type ${nodetype} --group zenswarm --image ${image} --label zenswarm-${reg} --region ${reg} --authorized_keys \"`cat ${sshkey}.pub`\""
+    info "linode-cli linodes ${1} --root_pass zenswarm --type ${nodetype} --group zenswarm --image ${image} --label zenswarm-${reg} --region ${reg} --authorized_keys \"`cat ${sshkey}.pub`\""
 }
 
 # linode-cli linodes list format
@@ -120,16 +121,6 @@ case $cmd in
 	    f=(${i//,/ })
 	    info "delete ${f[1]} (${f[2]})"
 	    linode-cli linodes delete ${f[0]};
-	done
-	;;
-    list-ips)
-	ips=(`linode-cli linodes list | awk ''"/${group}/"' {print $14}'`)
-	if [ ${#ips} = 0 ]; then
-	    info "Zero nodes found."
-	    exit 1
-	fi
-	for i in ${ips[@]}; do
-	    echo "$i"
 	done
 	;;
 
