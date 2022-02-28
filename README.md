@@ -54,12 +54,15 @@ Node operations
 
 ## Quick Start
 
-1. `make all-up` will summon the swarm servers
-2. `make install` will install all servers with zenswarm
-3. `make deploy` will install the zencode contracts on all servers
+1. `make one-up` will summon a single swarm development server
+2. `make image` will build the restroom backend on the server
+3. Create a new image labeled `zenswarm` based on this server
+4. `make all-up` will summon the swarm servers
+5. Plase your zencode contracts in a file called install.zip
+3. `make deploy` will deploy the zencode contracts on all servers
 
 Zencode contracts can be uploaded in the form of a .ZIP file as
-provided by [Apiroom](https://apiroom.net). Easy peasy lemon squeezy.
+provided by [Apiroom](https://apiroom.net).
 
 ## Swarm Management
 

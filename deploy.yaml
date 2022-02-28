@@ -1,22 +1,20 @@
 ---
-- name: Deploy Zencode
-  hosts: consensusroom
-  remote_user: root
+- name: DEPLOY ZENCODE
+  hosts: zenswarm
+  remote_user: app
   tasks:
+    - name: Upload restroom configuration
+      copy: src=restroom.conf dest=/home/app/restroom-mw/.env
     - name: Upload zencode
       copy: src=install.zip dest=/home/app/install.zip owner=app
     - name: Publish zencode on-line
-      become: true
-      become_user: "app"
-      shell: cd /home/app && unzip -o install.zip -d restroom-mw/zencode/
+      command: unzip -o install.zip -d restroom-mw/zencode/
     - name: Find own IP
-      shell: hostname -I | awk '{print $1}'
+      shell: /bin/hostname -I | awk '{print $1}'
       register: ipv4
     - name: Find machine ID
       shell: cat /var/lib/dbus/machine-id
       register: macid
     - name: Patch zencode with node values
-      become: true
-      become_user: "app"
       shell: >
         sed -i -e 's/192.168.0.100/{{ ipv4.stdout }}/g' -e 's/Kenshiro/{{ macid.stdout }}/g' -e 's/3030/3300/g' /home/app/restroom-mw/zencode/consensusroom-announce-p1.keys

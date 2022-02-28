@@ -1,6 +1,6 @@
 ---
 - name: reboot all nodes
-  hosts: consensusroom
+  hosts: zenswarm
   remote_user: root
   tasks:
     - name: Reboot
