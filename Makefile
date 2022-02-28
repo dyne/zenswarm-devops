@@ -1,6 +1,6 @@
 R ?= $(shell pwd)
 REGION ?= eu-central
-IMAGE ?= debian11
+IMAGE ?= linode/debian11
 rootpass := $(shell openssl rand -base64 32)
 nodetype := g6-nanode-1
 sshkey := ${R}/sshkey
@@ -87,7 +87,7 @@ image-save: ## save the zenswarm golden image
 ##@ Node operations
 
 install: inventory ssh-keygen ## install the zencode api server on all available nodes
-	$(info Installing all nodes
+	$(info Installing all nodes)
 	$(call ANSIPLAY, install-devuan-stage1.yaml)
 	@make -s ssh-cleanup
 	@./linode-swarm.sh wait-running

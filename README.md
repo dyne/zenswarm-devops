@@ -21,7 +21,7 @@ To be installed on each node in the swarm:
 
 - [zenroom](zenroom.org)
 - [restroom-mw](https://github.com/dyne/restroom-mw)
-- [nodejs v14](https://nodejs.org)
+- [nodejs v16](https://nodejs.org)
 - [supervisord](http://supervisord.org/)
 
 
@@ -90,4 +90,4 @@ full report of operations.
 
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-	
+
