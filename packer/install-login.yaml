@@ -1,0 +1,16 @@
+---
+- name: CONFIGURE APP LOGIN
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create a login user
+      user:
+        name: "app"
+        state: present
+        shell: /bin/bash
+        uid: 1000
+        home: /home/app
+    # - name: copy ssh keys from root to app
+    #   shell:
+    #     cp -ra ~/.ssh /home/app/ \
+    #     && chown -R app:app /home/app/.ssh
