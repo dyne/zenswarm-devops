@@ -1,5 +1,6 @@
 R ?= $(shell pwd)
 REGION ?= eu-central
+IMAGE ?= debian11
 rootpass := $(shell openssl rand -base64 32)
 nodetype := g6-nanode-1
 sshkey := ${R}/sshkey
@@ -55,7 +56,7 @@ all-down: inventory ## destroy all active nodes
 
 one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
 	$(info Creating one node in region ${REGION})
-	@./linode-swarm.sh one-up ${REGION}
+	@./linode-swarm.sh one-up ${REGION} ${IMAGE}
 	@make -s ssh-cleanup
 	@./linode-swarm.sh wait-running
 
@@ -111,7 +112,7 @@ announce:
 ssh: login ?= app
 ssh: ssh-keygen ## log into a node in REGION via ssh (eu-central is default)
 	$(info Logging into node via ssh on region ${REGION})
-	ssh -l ${login} -i ${sshkey} \
+	ssh -v -l ${login} -i ${sshkey} \
 	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
 	  $(shell ./linode-swarm.sh ip ${REGION})
 

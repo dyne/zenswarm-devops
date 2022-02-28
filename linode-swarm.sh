@@ -17,23 +17,25 @@ if ! [ -r ${sshkey} ]; then ssh-keygen -t ed25519 -f ${sshkey} -q -N ''; fi
 regions=(ca-central us-west us-east eu-central ap-west ap-southeast)
 
 linode-cmd() {
-    # linode-up-dry
-    linode-cli linodes ${1} --root_pass ${rootpass} --type ${nodetype} --group zenswarm --label zenswarm-${reg} --region ${reg} --authorized_keys "$(cat ${sshkey}.pub)"
+    linode-up-dry
+    linode-cli linodes ${1} --root_pass ${rootpass} --type ${nodetype} --group zenswarm --image ${image} --label zenswarm-${reg} --region ${reg} --authorized_keys "$(cat ${sshkey}.pub)"
 }
 linode-up-dry() {
-    info "linode-cli linodes create --root_pass ${rootpass} --type ${nodetype} --group zenswarm --label zenswarm-${reg} --region ${reg} --authorized_keys \"`cat ${sshkey}.pub`\""
+    info "linode-cli linodes ${1} --root_pass ${rootpass} --type ${nodetype} --group zenswarm --image ${image} --label zenswarm-${reg} --region ${reg} --authorized_keys \"`cat ${sshkey}.pub`\""
 }
 
 # linode-cli linodes list format
 #   2    4       6        8      10      12        14
 # │ id │ label │ region │ type │ image │ status  │ ipv4 │
 linode-list() {
-    linodes=(`linode-cli linodes list | awk "/${group}/"' {print $2","$6","$14}'`)
+    linodes=(`linode-cli --format id,label,region,status,ipv4 --text --delimiter , --no-headers  linodes list`)
     pos=0
     case $1 in
 	id|ids) pos=1 ;;
-	reg|regions) pos=2 ;;
-	ip|ips) pos=3 ;;
+	label|name) pos=2 ;;
+	reg|regions) pos=3 ;;
+	status) pos=4 ;;
+	ip|ips) pos=5 ;;
     esac
     for i in ${linodes[@]}; do
 	echo $i | cut -d, -f${pos}
@@ -73,6 +75,7 @@ cmd="$1"
 case $cmd in
     one-up)
 	reg=${2:-eu-central}
+	image=${3:-debian11}
 	linode-cmd create
 	;;
     ip)
