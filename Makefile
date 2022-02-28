@@ -55,8 +55,7 @@ all-down: inventory ## destroy all active nodes
 	$(info Destroying existing nodes in all regions)
 	@./linode-swarm.sh all-down
 
-one-up: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list \
-	 | awk '/zenswarm/ {print $$1}')
+one-up: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/ {print $$1}')
 one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
 	$(if ${IMAGE}, \
 		$(info Zenswarm image found: ${IMAGE}), \
@@ -80,27 +79,19 @@ image-init: ## setup golden image development on linode
 image-build: ## build the zenswarm golden image on linode
 	cd packer && packer build linode.pkr.hcl
 
+image-delete: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/ {print $$1}')
+image-delete: ## delete the zenswarm golden image on linode
+	linode-cli images delete ${IMAGE}
+
 # $(call ANSIPLAY, install-restroom.yaml)
 
-##@ Node operations
-
-install: inventory ssh-keygen ## install the zencode api server on all available nodes
-	$(info Installing all nodes)
-	$(call ANSIPLAY, install-devuan-stage1.yaml)
-	@make -s ssh-cleanup
-	@./linode-swarm.sh wait-running
-	$(call ANSIPLAY, install-devuan-stage2.yaml)
-	@./linode-swarm.sh wait-running
-	$(call ANSIPLAY, install-login.yaml)
-	$(call ANSIPLAY, install.yaml)
-	$(call ANSIPLAY, install-restroom.yaml)
-	$(if $(wildcard ./install.zip), \
-		$(call ANSIPLAY, deploy.yaml), \
-	$(info Skipped deploy, install.zip not found. Use: make deploy))
+##@ App management
 
 deploy: inventory ssh-keygen ## deploy the zencode contracts on all available nodes
-	$(info Installing all nodes)
-	$(call ANSIPLAY, deploy.yaml)
+	$(if $(wildcard ./install.zip), \
+		$(info Installing all nodes) \
+		$(call ANSIPLAY, deploy.yaml) \
+	, $(error Zencode not found, install.zip is missing))
 
 announce:
 	make -s list-ips \
@@ -110,7 +101,7 @@ announce:
 ssh: login ?= app
 ssh: ssh-keygen ## log into a node in REGION via ssh (eu-central is default)
 	$(info Logging into node via ssh on region ${REGION})
-	ssh -v -l ${login} -i ${sshkey} \
+	ssh -l ${login} -i ${sshkey} \
 	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
 	  $(shell ./linode-swarm.sh ip ${REGION})
 

@@ -15,8 +15,5 @@ variable "ansible_host" { default = "zenswarm" }
 
 build {
   sources = ["source.linode.zenswarm"]
-
-  provisioner "ansible" { playbook_file = "./install-devuan.yaml" }
-  provisioner "ansible" { playbook_file = "./install-login.yaml" }
-  provisioner "ansible" { playbook_file = "./install.yaml" }
+  provisioner "ansible" { playbook_file = "./install-linode.yaml" }
 }
