@@ -1,6 +1,6 @@
 ---
 - name: reboot all nodes
-  hosts: zenswarm
+  hosts: all
   remote_user: root
   tasks:
     - name: Reboot

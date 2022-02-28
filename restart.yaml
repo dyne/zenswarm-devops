@@ -1,6 +1,6 @@
 ---
 - name: restart restroom on all nodes
-  hosts: zenswarm
+  hosts: all 
   remote_user: root
   tasks:
     - name: Restart

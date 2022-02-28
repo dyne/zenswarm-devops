@@ -43,19 +43,14 @@ linode-list() {
     done
 }
 
-pause() {
-    echo -n >&2 "."
-    sleep $1
-}
-
 linode-wait-running() {
     running=0
     while [ $running = 0 ]; do
 	linode-cli linodes list | grep provisioning
 	running=$?
-	sleep 1
+	sleep 5
     done
-    pause 1
+    sleep 1
     ips=(`linode-list ip`)
     info ${ips}
     booting=1
@@ -110,6 +105,7 @@ case $cmd in
 	;;
 
     all-up)
+	image=${2:-linode/debian11}
 	for reg in ${regions[@]}; do
 	    linode-cmd create
 	done

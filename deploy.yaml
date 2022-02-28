@@ -1,14 +1,14 @@
 ---
 - name: DEPLOY ZENCODE
-  hosts: zenswarm
-  remote_user: app
+  hosts: all
+  remote_user: root
   tasks:
     - name: Upload restroom configuration
-      copy: src=restroom.conf dest=/home/app/restroom-mw/.env
+      copy: src=restroom.conf dest=/home/app/restroom-template-minimal/.env
     - name: Upload zencode
       copy: src=install.zip dest=/home/app/install.zip owner=app
     - name: Publish zencode on-line
-      command: unzip -o install.zip -d restroom-mw/zencode/
+      command: unzip -o /home/app/install.zip -d /home/app/restroom-template-minimal/zencode
     - name: Find own IP
       shell: /bin/hostname -I | awk '{print $1}'
       register: ipv4
@@ -17,4 +17,9 @@
       register: macid
     - name: Patch zencode with node values
       shell: >
-        sed -i -e 's/192.168.0.100/{{ ipv4.stdout }}/g' -e 's/Kenshiro/{{ macid.stdout }}/g' -e 's/3030/3300/g' /home/app/restroom-mw/zencode/consensusroom-announce-p1.keys
+        sed -i -e 's/192.168.0.100/{{ ipv4.stdout }}/g' -e 's/Kenshiro/{{ macid.stdout }}/g' -e 's/3030/3300/g' /home/app/restroom-template-minimal/zencode/consensusroom-announce-p1.keys
+    - name: Reboot server
+      shell: init 6
+      async: 1
+      poll: 0
+      ignore_errors: true

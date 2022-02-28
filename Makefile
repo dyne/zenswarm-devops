@@ -40,20 +40,25 @@ list-ips:
 	@linode-cli --text --no-header --format ipv4 linodes list
 #	@./linode-swarm.sh list-ips
 
-inventory: ## update the ansible inventory of active nodes
+inventory:
 	@echo "[zenswarm]" >  hosts.toml
 	@make -s list-ips >> hosts.toml
 	$(info Inventory updated in hosts.toml)
 
-all-up: ## create 11 active nodes, one for each linode region
+all-up: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/ {print $$1}')
+all-up: ssh-keygen ## create 11 active nodes, one for each linode region
+	$(if ${IMAGE}, \
+		$(info Zenswarm image found: ${IMAGE}), \
+		$(error Zenswarm image not found, use image-build first))
 	$(info Creating active nodes in all available regions)
-	@./linode-swarm.sh all-up
+	@./linode-swarm.sh all-up ${IMAGE}
 	@make -s ssh-cleanup
 	@./linode-swarm.sh wait-running
 
-all-down: inventory ## destroy all active nodes
+teardown: inventory ## destroy all active nodes
 	$(info Destroying existing nodes in all regions)
-	@./linode-swarm.sh all-down
+	@linode-cli --text --no-header --format id linodes list \
+	| xargs -I {} linode-cli linodes delete "{}"
 
 one-up: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/ {print $$1}')
 one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
@@ -65,9 +70,6 @@ one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
 	@make -s ssh-cleanup
 	@./linode-swarm.sh wait-running
 
-one-down: ## destroy one active node in REGION (eu-central is default)
-	$(info Destroying one node in region ${REGION})
-	@linode-cli linodes delete $(shell ./linode-swarm.sh id ${REGION})
 
 ##@ Image operations
 
@@ -87,19 +89,19 @@ image-delete: ## delete the zenswarm golden image on linode
 
 ##@ App management
 
-deploy: inventory ssh-keygen ## deploy the zencode contracts on all available nodes
+deploy: inventory ## deploy the zencode contracts on all available nodes
 	$(if $(wildcard ./install.zip), \
 		$(info Installing all nodes) \
 		$(call ANSIPLAY, deploy.yaml) \
 	, $(error Zencode not found, install.zip is missing))
 
-announce:
+announce: inventory ## announce all nodes to the tracker endpoint
 	make -s list-ips \
 	| xargs -I {} curl -X 'POST' \
 	              "http://{}:3300/api/consensusroom-announce.chain"
 
-ssh: login ?= app
-ssh: ssh-keygen ## log into a node in REGION via ssh (eu-central is default)
+ssh: login ?= root
+ssh: ## log into a node in REGION via ssh (eu-central is default)
 	$(info Logging into node via ssh on region ${REGION})
 	ssh -l ${login} -i ${sshkey} \
 	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
@@ -109,7 +111,7 @@ uptime: inventory ## show uptime of all running nodes
 	$(info Showing uptime for all running nodes)
 	$(call ANSIPLAY, uptime.yaml)
 
-reboot: inventory
+reboot: inventory ## reboot all running nodes
 	$(call ANSIPLAY, reboot.yaml)
 
 restart: inventory
