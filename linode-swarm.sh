@@ -74,34 +74,9 @@ case $cmd in
 	image=${3:-debian11}
 	linode-cmd create
 	;;
-    ip)
-	reg=${2:-eu-central}
-	linode-list ip
-	;;
-    id)
-	reg=${2:-eu-central}
-	linode-list id
-	;;
 
     wait-running)
 	linode-wait-running
-	;;
-
-    announce)
-	info "Announce all nodes"
-	ids=(`linode-cli linodes list | awk "/${group}/"' {print $14}'`)
-	for i in ${ids[@]}; do
-	    curl -X 'POST' "http://${i}:3300/api/consensusroom-announce.chain"
-	done
-	;;
-
-    reboot)
-	info "Reboot all nodes"
-	ids=(`linode-cli linodes list | awk "/${group}/"' {print $14}'`)
-	for i in ${ids[@]}; do
-	    info "reboot ${i}"
-	    ssh -i ${sshkey} root@${i} -c 'init 6'
-	done
 	;;
 
     all-up)
@@ -120,19 +95,6 @@ case $cmd in
 	done
 	;;
 
-    install|install.yaml)
-	shift 1
-	ANSIBLE_HOST_KEY_CHECKING=False \
-	ansible-playbook install.yaml \
-	--private-key ${sshkey} --inventory hosts.toml $*
-	;;
-
-    deploy|deploy.yaml)
-	shift 1
-	ANSIBLE_HOST_KEY_CHECKING=False \
-	ansible-playbook deploy.yaml \
-	--private-key ${sshkey} --inventory hosts.toml $*
-	;;
     'source') ;;
     *)
 	info "usage: $0 [ one-up/down | all-up/down | inventory ]"

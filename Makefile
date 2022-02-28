@@ -88,7 +88,7 @@ image-delete: ## delete the zenswarm golden image on linode
 ##@ App management
 
 deploy: inventory ## deploy the zencode contracts on all available nodes
-	$(if $(wildcard ./install.zip), \
+	$(if $(wildcard roles/install.zip), \
 		$(info Installing all nodes) \
 		$(call ANSIPLAY,deploy.yaml) \
 	, $(error Zencode not found, install.zip is missing))
@@ -99,11 +99,11 @@ announce: inventory ## announce all nodes to the tracker endpoint
 	              "http://{}:3300/api/consensusroom-announce.chain"
 
 ssh: login ?= root
+ssh: ip ?= $(shell linode-cli --text --no-header --format region,ipv4 linodes list | awk '/${REGION}/{print $$2}')
 ssh: ## log into a node in REGION via ssh (eu-central is default)
 	$(info Logging into node via ssh on region ${REGION})
 	ssh -l ${login} -i ${sshkey} \
-	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes \
-	  $(shell ./linode-swarm.sh ip ${REGION})
+	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes ${ip}
 
 uptime: inventory ## show uptime of all running nodes
 	$(info Showing uptime for all running nodes)
