@@ -35,38 +35,47 @@ Usage:
 
 General
   help             Display this help.
-  inventory        update and show list of active nodes
   regions          list available regions
   ssh-keygen       generate a dedicated ssh keypair here
+  ssh-cleanup      clean all fingerprints from known hosts
 
 Node lifecycle
+  list             list running nodes (list-ips for IPv4 only)
   all-up           create 11 active nodes, one for each linode region
-  all-down         destroy all active nodes
-  one-up           create one active node in REGION (eu-west is default)
-  one-down         destroy one active node in REGION (eu-west is default)
+  teardown         destroy all active nodes
+  one-up           create 1 active node in REGION (eu-central is default)
 
-Node operations
-  install          install the zencode api server on all available nodes
-  deploy           install the zencode api server on all available nodes
-  ssh              log into a node in REGION via ssh (eu-west is default)
+Image operations
+  image-init       setup golden image development on linode
+  image-build      build the zenswarm golden image on linode
+  image-delete     delete the zenswarm golden image on linode
+
+App management
+  deploy           deploy the zencode contracts on all available nodes
+  announce         announce all nodes to the tracker endpoint
+  ssh              log into a node in REGION via ssh (eu-central is default)
   uptime           show uptime of all running nodes
+  reboot           reboot all running nodes
 ```
 
 ## Quick Start
 
-1. `make one-up` will summon a single swarm development server
-2. `make image` will build the restroom backend on the server
-3. Create a new image labeled `zenswarm` based on this server
-4. `make all-up` will summon the swarm servers
-5. Plase your zencode contracts in a file called install.zip
-3. `make deploy` will deploy the zencode contracts on all servers
+1. `make image-init` will configure packer to build a zenswarm image
+2. `make image-build` will build a zenswarm golden image on linode
+3. `make one-up` will summon a single test node (default eu-central)
+4. `make ssh` to ssh into a single node (default eu-central)
+4. `make teardown` will destroy all nodes running
+5. `make all-up` will summon a swarm of nodes in different regions
+6. Place your zencode contracts in roles/install.zip
+7. `make deploy` will deploy the zencode contracts on all servers
+8. `make uptime` will show the uptime and memory of all servers
 
 Zencode contracts can be uploaded in the form of a .ZIP file as
 provided by [Apiroom](https://apiroom.net).
 
 ## Swarm Management
 
-Use `make inventory` to have a list of active nodes and `make ssh` to
+Use `make list` to have a list of active nodes and `make ssh` to
 login into one of them individually, would there be some debugging
 need.
 
@@ -76,7 +85,7 @@ full report of operations.
 
 # Acknowledgements
 
-	Zenswarm is Copyleft (ɔ) 2022 Dyne.org foundation, Amsterdam
+    Zenswarm is Copyleft (ɔ) 2022 Dyne.org foundation, Amsterdam
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as
