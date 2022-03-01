@@ -132,7 +132,7 @@ uptime: inventory ## show uptime of all running nodes
 	$(call ANSIPLAY,uptime.yaml)
 
 ping: ## show ping of all running nodes
-	make -s list-ips | xargs -I {} ping -q -c 5 -n "{}"
+	@bash scripts/ping.sh
 
 reboot: inventory ## reboot all running nodes
 	$(call ANSIPLAY,reboot.yaml)
