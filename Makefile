@@ -74,6 +74,14 @@ one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
 	@make -s ssh-cleanup
 	@./scripts/wait-running.sh
 
+longview: ## install longview monitoring on nodes (resets current)
+	$(info Install longview on nodes)
+	$(call ANSIPLAY,longview.yaml)
+	$(info Deleting all existing longview clients)
+	@linode-cli longview list --text --no-header --format id | xargs -I {} linode-cli longview delete "{}"
+	$(info Setting up longview on all nodes)
+	@bash ./scripts/install_longview.sh
+
 ##@ Image operations
 
 image-init: ## setup golden image development on linode
@@ -109,6 +117,15 @@ ssh: ## log into a node in REGION via ssh (eu-central is default)
 	$(info Logging into node via ssh on region ${REGION})
 	ssh -l ${login} -i ${sshkey} \
 	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes ${ip}
+
+ssh-exec: login ?= root
+ssh-exec: ip ?= $(shell linode-cli --text --no-header --format region,ipv4 linodes list | awk '/${REGION}/{print $$2}')
+ssh-exec: ## execute CMD on all nodes via ssh
+	$(if ${CMD},\
+	$(info Executing command on all nodes via ssh: ${CMD}),\
+	$(error Command not defined, set env var CMD))
+	@make -s list-ips | xargs -I {} ssh -l ${login} -i ${sshkey} \
+	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes "{}" ${CMD}
 
 uptime: inventory ## show uptime of all running nodes
 	$(info Showing uptime for all running nodes)

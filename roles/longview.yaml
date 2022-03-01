@@ -1,0 +1,35 @@
+---
+- name: INSTALL LONGVIEW MONITORING
+  hosts: all 
+  remote_user: root
+  tasks:
+    - name: Install linode's package signing keys
+      get_url:
+        url:  https://apt-longview.linode.com/linode.gpg
+        dest: /etc/apt/trusted.gpg.d/linode.gpg
+        mode: 0755
+    - name: Add longview repo by linode
+      lineinfile:
+        dest: /etc/apt/sources.list
+        line: 'deb http://apt-longview.linode.com/ bullseye main'
+        state: present
+    - name: Ensures /etc/linode exists
+      file: path=/etc/linode state=directory
+    # - name: Delete old longview token
+    #   file: path=/etc/linode/longview.key state=absent
+    # - name: Add longview token
+    #   lineinfile:
+    #     dest: /etc/linode/longview.key
+    #     line: "{{ lookup('env', 'TOKEN') }}"
+    #     state: present
+    #     create: yes
+    - name: Install longview
+      apt:
+        force: yes
+        name: linode-longview
+        update_cache: yes
+    # - name: Start longview
+    #   systemd:
+    #     name: longview
+    #     state: started
+    #     enabled: yes
