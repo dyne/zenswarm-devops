@@ -1,8 +1,5 @@
-# Zenswarm
+![Zenswarm](docs/zenswarm_logotitle.png)
 
-Orchestrating Zenroom VMlets as a Swarm of Oracles
-
-![image](https://user-images.githubusercontent.com/148059/149499339-af8c430d-6d3c-4dd7-9029-6bf514867b56.png)
 
 # Requirements
 
@@ -82,6 +79,8 @@ need.
 The use of `make uptime` should be enough to see the usage of all
 nodes, we are working to equip the swarm with more metrics and a
 full report of operations.
+
+![Swarm of keys](docs/keyswarm.png)
 
 # Acknowledgements
 
