@@ -1,4 +1,4 @@
-![Zenswarm](docs/zenswarm_logotitle.png)
+![Zenswarm](docs/zenswarm.svg)
 
 
 # Requirements
