@@ -13,6 +13,7 @@ To be installed on the orchestration terminal:
 - ansible
 - [zenroom](zenroom.org)
 - [linode-cli](https://www.linode.com/products/cli/)
+- [packer](https://packer.io)
 
 To be installed on each node in the swarm:
 
