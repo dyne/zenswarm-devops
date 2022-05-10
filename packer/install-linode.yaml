@@ -79,22 +79,13 @@
       args:
         executable: /bin/bash
 
-    - name: Upload supervisord service conf
-      copy: src=supervisord.service dest=/etc/systemd/system/supervisord.service
-    - name: Configure supervised services
-      copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf
-    - name: Create a directory for app supervisor
-      file:
-        path: /home/app/supervisor
-        state: directory
-        mode: '0755'
-        owner: app
-        group: app
-    - name: Configure supervisord to run as app
-      lineinfile:
-        path: /etc/default/supervisor
-        regexp: '^DAEMON_OPTS='
-        line: 'DAEMON_OPTS="-u app"'
+    - name: Install pm2
+      become: true
+      become_user: "app"
+      shell:
+        source ~/.nvm/nvm.sh && yarn global add pm2
+      args:
+        executable: /bin/bash
 
     - name: Check restroom-installation
       stat:
@@ -118,6 +109,11 @@
       become: true
       become_user: "app"
 
-    - name: Upload restroom start script
-      copy: src=start.sh dest=/home/app/restroom-template-minimal/start.sh
-
+    - name:
+      become: true
+      become_user: "app"
+      shell:
+        ~/.yarn/bin/pm2 kill && ~/.yarn/bin/pm2 start yarn --update-env --name restroom --time -- start
+      args:
+        executable: /bin/bash
+        chdir: /home/app/restroom-template-minimal
