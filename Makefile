@@ -1,6 +1,7 @@
 R ?= $(shell pwd)
 REGION ?= eu-central
-# IMAGE ?= linode/debian11
+IP ?= $(shell linode-cli --text --no-header --format region,ipv4 linodes list | awk '/${REGION}/{print $$2}')
+IMAGE ?= $(shell linode-cli  --text --no-header --format id,label images list | awk '/ zenswarm / {print $$1}')
 rootpass := $(shell openssl rand -base64 32)
 nodetype := g6-nanode-1
 sshkey := ${R}/sshkey
@@ -25,20 +26,49 @@ play:
 steps:
 	@cat $(subst -steps,,${PLAYBOOK}) | grep '\- name'
 
-regions: ## list available regions
-	@linode-cli regions list
-
 ssh-keygen: ## generate a dedicated ssh keypair here
 	$(if $(wildcard ${sshkey}),,\
 		$(info Generating ssh keypair) \
 		ssh-keygen -t ed25519 -f ${sshkey} -q -N '')
 
-ssh-cleanup: ## clean all fingerprints from known hosts
+ssh-cleanup: ## clean all saved ssh fingerprints of known oracles
 	@make -s list-ips | xargs -I {} \
 		ssh-keygen -q -f "${HOME}/.ssh/known_hosts" -R "{}"
 
+##@ Creation
+list-regions: ## list all available regions
+	@linode-cli regions list
+
+list-images:
+	@linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/'
+
+create-issuer: ssh-keygen ## create 1 active node in REGION (eu-central is default)
+	$(if ${IMAGE}, \
+		$(info Zenswarm image found: ${IMAGE}), \
+		$(error Zenswarm image not found, use image-build first))	
+	$(info Creating one node in region ${REGION})
+	@echo ${REGION} | $(call LINCREATE,${IMAGE})
+	@make -s ssh-cleanup
+	@./scripts/wait-running.sh
+# TODO:
+# upload issuer-zencode.zip
+# trigger Issuer Setup API with signed curl to initiate setup
+
+create-oracle: ssh-keygen ## create 1 active node in REGION (eu-central is default)
+	$(if ${IMAGE}, \
+		$(info Zenswarm image found: ${IMAGE}), \
+		$(error Zenswarm image not found, use image-build first))	
+	$(info Creating one node in region ${REGION})
+	@echo ${REGION} | $(call LINCREATE,${IMAGE})
+	@make -s ssh-cleanup
+	@./scripts/wait-running.sh
+# TODO:
+# upload oracle-zencode.zip
+# trigger Issuer API with signed curl to initiate registration
+
+
 ##@ Node lifecycle
-list: ## list running nodes (list-ips for IPv4 only)
+list: ## list running oracles (list-ips for IPv4 only)
 	@linode-cli linodes list
 
 list-ips:
@@ -49,23 +79,21 @@ inventory:
 	@make -s list-ips >> hosts.toml
 	$(info Inventory updated in hosts.toml)
 
-all-up: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/ {print $$1}')
-all-up: ssh-keygen
+all-up: ssh-keygen ## create oracles in all regions (grep regions Makefile)
 	$(if ${IMAGE}, \
 		$(info Zenswarm image found: ${IMAGE}), \
 		$(error Zenswarm image not found, use image-build first))
-	$(info Creating active nodes in all regions: ${regions})
+	$(info Creating active oracles in all regions: ${regions})
 	@for i in ${regions}; do echo $$i; done | $(call LINCREATE,${IMAGE})
 	@make -s ssh-cleanup
 	@./scripts/wait-running.sh
 
-teardown: inventory ## destroy all active nodes
-	$(info Destroying existing nodes in all regions)
+teardown: inventory ## destroy all oracles
+	$(info Destroying existing oracles in all regions)
 	@linode-cli --text --no-header --format id linodes list \
 	| xargs -I {} linode-cli linodes delete "{}"
 
-one-up: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/ {print $$1}')
-one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
+one-up: ssh-keygen ## create one oracle in REGION (eu-central is default)
 	$(if ${IMAGE}, \
 		$(info Zenswarm image found: ${IMAGE}), \
 		$(error Zenswarm image not found, use image-build first))	
@@ -74,66 +102,60 @@ one-up: ssh-keygen ## create 1 active node in REGION (eu-central is default)
 	@make -s ssh-cleanup
 	@./scripts/wait-running.sh
 
-longview: ## install longview monitoring on nodes (resets current)
-	$(info Install longview on nodes)
+longview: ## install longview monitoring on oracles (resets current)
+	$(info Install longview on all oracles)
 	$(call ANSIPLAY,longview.yaml)
 	$(info Deleting all existing longview clients)
 	@linode-cli longview list --text --no-header --format id | xargs -I {} linode-cli longview delete "{}"
-	$(info Setting up longview on all nodes)
+	$(info Setting up longview on all oracles)
 	@bash ./scripts/install_longview.sh
 
 ##@ Image operations
 
-image-init: ## setup golden image development on linode
+image-init: ## setup golden image development on cloud
 	packer init packer/config.pkr.hcl
 
 image-build: linode-token := $(shell awk '/token/ {print $$3}' ${HOME}/.config/linode-cli)
 image-build: tmp := $(shell mktemp)
-image-build: ## build the zenswarm golden image on linode
+image-build: ## build the zenswarm golden image on cloud
 	@sed "s/linode_token=\"\"/linode_token=\"${linode-token}\"/g" packer/linode.pkr.hcl > ${tmp}.pkr.hcl
 	-cd packer && packer build ${tmp}.pkr.hcl
 	rm -f ${tmp} ${tmp}.pkr.hcl
 
-image-delete: IMAGE ?= $(shell linode-cli --format id,label --text --no-headers images list | awk '/zenswarm/ {print $$1}')
-image-delete: ## delete the zenswarm golden image on linode
-	linode-cli images delete ${IMAGE}
-
 ##@ App management
 
-deploy: inventory ## deploy the zencode contracts on all available nodes
+deploy: inventory ## deploy the zencode contracts on all available oracles
 	$(if $(wildcard roles/install.zip), \
-		$(info Installing all nodes) \
+		$(info Installing all oracles) \
 		$(call ANSIPLAY,deploy.yaml) \
 	, $(error Zencode not found, install.zip is missing))
 
-announce: inventory ## announce all nodes to the tracker endpoint
+announce: inventory ## announce all oracles to the tracker endpoint
 	make -s list-ips \
 	| xargs -I {} curl -X 'POST' \
 	              "http://{}:3300/api/consensusroom-announce.chain"
 
 ssh: login ?= root
-ssh: ip ?= $(shell linode-cli --text --no-header --format region,ipv4 linodes list | awk '/${REGION}/{print $$2}')
 ssh: ## log into a node in REGION via ssh (eu-central is default)
 	$(info Logging into node via ssh on region ${REGION})
 	ssh -l ${login} -i ${sshkey} \
-	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes ${ip}
+	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes ${IP}
 
 ssh-exec: login ?= root
-ssh-exec: ip ?= $(shell linode-cli --text --no-header --format region,ipv4 linodes list | awk '/${REGION}/{print $$2}')
-ssh-exec: ## execute CMD on all nodes via ssh
+ssh-exec: ## execute CMD on all oracles via ssh
 	$(if ${CMD},\
-	$(info Executing command on all nodes via ssh: ${CMD}),\
+	$(info Executing command on all oracles via ssh: ${CMD}),\
 	$(error Command not defined, set env var CMD))
 	@make -s list-ips | xargs -I {} ssh -l ${login} -i ${sshkey} \
 	  -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes "{}" ${CMD}
 
-uptime: inventory ## show uptime of all running nodes
-	$(info Showing uptime for all running nodes)
+uptime: inventory ## show uptime of all running oracles
+	$(info Showing uptime for all running oracles)
 	$(call ANSIPLAY,uptime.yaml)
 
-ping: ## show ping of all running nodes
+ping: ## show ping of all running oracles
 	@bash scripts/ping.sh
 
-reboot: inventory ## reboot all running nodes
+reboot: inventory ## reboot all running oracles
 	$(call ANSIPLAY,reboot.yaml)
 

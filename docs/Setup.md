@@ -45,7 +45,7 @@ autonumber
 
   A->>C: Create VM
   C->>V: VM install and new IP
-  C->>A: Grant VM setup access
+  C->>A: Grant VM setup access + IP
   A->>I: aSK signed registration of a new VM IP
   A->>V: Provision signed scripts + Issuer public key (iPK)
 ```
