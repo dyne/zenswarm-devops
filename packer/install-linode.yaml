@@ -108,12 +108,3 @@
         chdir: /home/app/restroom-template-minimal
       become: true
       become_user: "app"
-
-    - name:
-      become: true
-      become_user: "app"
-      shell:
-        source ~/.nvm/nvm.sh && ~/.yarn/bin/pm2 kill && ~/.yarn/bin/pm2 start yarn --update-env --name restroom --time -- start
-      args:
-        executable: /bin/bash
-        chdir: /home/app/restroom-template-minimal
