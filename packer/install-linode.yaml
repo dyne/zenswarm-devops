@@ -37,6 +37,7 @@
         autoremove: true
         state: latest
         pkg:
+          - python
           - ntpdate
           - curl
           - git
@@ -48,6 +49,8 @@
           - jq
           - unzip
           - supervisor
+          - build-essential
+          - libczmq-dev
 
     - name: Check nvm
       stat:
@@ -87,24 +90,12 @@
       args:
         executable: /bin/bash
 
-    - name: Check restroom-installation
-      stat:
-        path: /home/app/restroom-template-minimal
+    - name: Login shell init for app user
       become: true
       become_user: "app"
-      register: restroom_installed
-
-    - name: Clone restroom
-      git:
-        repo: https://github.com/dyne/restroom-template-minimal
-        dest: /home/app/restroom-template-minimal
-      become: true
-      become_user: "app"
-
-    - name: Install restroom 
-      shell: source ~/.nvm/nvm.sh && yarn
-      args:
-        executable: /bin/bash
-        chdir: /home/app/restroom-template-minimal
-      become: true
-      become_user: "app"
+      blockinfile:
+        path: ~/.bashrc
+        block: |
+          source ~/.nvm/nvm.sh
+          export PATH=$PATH:~/.yarn/bin
+        create: yes
