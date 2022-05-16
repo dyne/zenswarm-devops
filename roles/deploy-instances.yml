@@ -7,26 +7,23 @@
       become: true
       become_user: "app"
       ansible.builtin.file:
-        path: ~/manual-deployment
+        path: ~/zenswarm
         state: absent
 
     - name: create deploy directory
       become: true
       become_user: "app"
-      ansible.builtin.copy:
-        src: ./manual-deployment
-        dest: ~/
+      git:
+       repo: https://github.com/dyne/zenswarm.git
+       dest: ~/zenswarm
+       clone: yes
+       update: yes
 
-    - name: stop pm2
-      become: true
-      become_user: "app"
-      shell: /bin/bash -c "source ~/.nvm/nvm.sh && ~/.yarn/bin/pm2 kill && ~/.yarn/bin/pm2 delete all && rm -rf vmlets || echo \"OK\""
-      args:
-        chdir: ~/manual-deployment
-
-    - name: start provisioning
+    - name: apply patch
       become: true
       become_user: "app"
       shell: >
-        /bin/bash -c "PATH=$PATH:~/.yarn/bin source ~/.nvm/nvm.sh && cd ~/manual-deployment && tmux new -s provisioning \"bash instance-provisioning.sh && bash\""
-
+        sed -i 's/$(hostname)/$(hostname -I)/' manual-deployment/instance-provisioning.sh &&
+        sed -i 's/command -v/#command -v/' manual-deployment/instance-provisioning.sh
+      args:
+        chdir: ~/zenswarm
