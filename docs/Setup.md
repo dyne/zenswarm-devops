@@ -121,4 +121,29 @@ autonumber
 1. VM verifies the ZIP is signed by the Issuer and installs the scripts
 
 
+## VM teardown
+```mermaid
+sequenceDiagram
+autonumber
+  participant A as Admin
+  participant I as Issuer
+  participant V as VM1..VM2..VMn
+  
+  A->>I: aSK signed shutdown + VM id
+  I->I: aPK verify shutdown
+  I->>V: iSK signed shutdown
+  V->V: iPK verify and shutdown
+  V->>I: vSK signed goodbye
+  I->I: vPK verify and remove VM
+```
+
+1. Admin signs and sends a shutdown message for a certain VM
+1. Issuer verifies message is signed by the Admin and the VM exists
+1. Issuer signs sends the shutdown message to the VM
+1. VM verifies the signed message
+1. VM signs a goodbye message and sends it to the Issuer
+1. Issuer verifies the goodbye message and removes the VM
+
+
+
 
