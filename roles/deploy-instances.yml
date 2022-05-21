@@ -2,7 +2,21 @@
 - name: Deploy instances
   hosts: all
   user: "root"
+  vars:
+    ansible_url: "https://apiroom.net/api/dyneorg/zenswarm-server-add-identity-dev"
+    deansible_url: "https://apiroom.net/api/dyneorg/zenswarm-issuer-remove-identity-dev"
+    nodes: "10"
   tasks:
+    - name: Bashrc
+      become: true
+      become_user: "app"
+      blockinfile:
+        path: ~/.bashrc
+        insertafter: EOF
+        block: |
+          source ~/.nvm/nvm.sh
+          cd ~/zenswarm/manual-deployment
+
     - name: Start from scratch
       become: true
       become_user: "app"
@@ -19,11 +33,31 @@
        clone: yes
        update: yes
 
+    - name: set env variables
+      become: true
+      become_user: "app"
+      blockinfile:
+        path: ~/zenswarm/manual-deployment/instance-provisioning.sh
+        insertbefore: BOF
+        block: |
+          # ANSIBLE_URL={{ ansible_url }}
+          # DEANSIBLE_URL={{ deansible_url }}
+          NODES={{ nodes }}
+          COUNTRY="{{ country }}"
+          REGION="{{ region }}"
+
+    - name: copy subscriptions
+      become: true
+      become_user: "app"
+      copy:
+        src: "{{ subscriptions }}"
+        dest: ~/zenswarm/manual-deployment/subscriptions.csv
+
     - name: apply patch
       become: true
       become_user: "app"
       shell: >
-        sed -i 's/$(hostname)/$(hostname -I)/' manual-deployment/instance-provisioning.sh &&
+        sed -i 's/$(hostname)/$(hostname -I | cut -d " " -f1)/' manual-deployment/instance-provisioning.sh &&
         sed -i 's/command -v/#command -v/' manual-deployment/instance-provisioning.sh
       args:
         chdir: ~/zenswarm
