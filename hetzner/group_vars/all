@@ -1,0 +1,6 @@
+repository_id: zenswarm
+repository: https://github.com/dyne/{{repository_id}}
+
+deploy_path: /root/zenswarm
+ansible_ssh_private_key_file: ~/.ssh/fuffola
+ansible_ssh_user: root

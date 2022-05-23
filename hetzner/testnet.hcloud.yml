@@ -1,0 +1,7 @@
+plugin: hcloud
+
+token: XXXX
+
+keyed_groups:
+  - key: labels
+    prefix: label

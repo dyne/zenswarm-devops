@@ -1,0 +1,65 @@
+- name: Deploy vmlets
+  hosts: all
+  tasks:
+    - name: Install system Dependencies
+      apt:
+        pkg:
+          - git
+          - curl
+        update_cache: yes
+
+
+    - name: Github checkout 
+      ansible.builtin.git:
+        repo: "{{repository}}"
+        dest: "{{deploy_path}}"
+
+    - name: Installing nodejs repos
+      ansible.builtin.shell:
+        cmd: "curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -"
+
+    - name: Install nodejs package
+      apt:
+        pkg:
+          - nodejs
+        update_cache: yes
+
+    - name: Install nodejs package
+      file:
+        path: "{{deploy_path}}/manual-deployment/vmlets"
+        state: directory
+
+    - name: Execute install scripts
+      ansible.builtin.shell:
+        cmd: "COUNTRY={{ item }} ./instance-provisioning.sh"
+        chdir: "{{deploy_path}}/manual-deployment"
+      args:
+        executable: /bin/bash
+      with_random_choice:
+        - "AT"
+        - "BE"
+        - "BG"
+        - "CY"
+        - "CZ"
+        - "DE"
+        - "DK"
+        - "EE"
+        - "ES"
+        - "FI"
+        - "FR"
+        - "GR"
+        - "HR"
+        - "HU"
+        - "IE"
+        - "IT"
+        - "LT"
+        - "LU"
+        - "LV"
+        - "MT"
+        - "NL"
+        - "PO"
+        - "PT"
+        - "RO"
+        - "SE"
+        - "SI"
+        - "SK" 

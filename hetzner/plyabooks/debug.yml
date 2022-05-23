@@ -1,0 +1,10 @@
+- hosts: all
+  remote_user: root
+
+  vars:
+    ansible_host: "{{ ipv4 }}"
+
+  tasks:
+    - name: Debug
+      debug:
+        msg: " {{ ipv4 }}"
